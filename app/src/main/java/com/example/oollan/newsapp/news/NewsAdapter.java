@@ -1,5 +1,7 @@
 package com.example.oollan.newsapp.news;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +12,10 @@ import android.widget.TextView;
 import com.example.oollan.newsapp.R;
 
 import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder> {
 
@@ -51,21 +57,26 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         return splits[2] + DASH_SEPARATOR + splits[1] + DASH_SEPARATOR + splits[0];
     }
 
-    public News getCurrentNews(int position) {
-        return newsList.get(position);
-    }
-
     class NewsViewHolder extends RecyclerView.ViewHolder {
 
-        private ImageView thumbnail;
-        private TextView title;
-        private TextView date;
+        @BindView(R.id.thumbnail)
+        ImageView thumbnail;
+        @BindView(R.id.title)
+        TextView title;
+        @BindView(R.id.date)
+        TextView date;
 
-        NewsViewHolder(View recyclerItem) {
-            super(recyclerItem);
-            thumbnail = recyclerItem.findViewById(R.id.thumbnail);
-            title = recyclerItem.findViewById(R.id.title);
-            date = recyclerItem.findViewById(R.id.date);
+        NewsViewHolder(View itemView) {
+            super(itemView);
+            ButterKnife.bind(this, itemView);
+        }
+
+        @OnClick
+        void onClick() {
+            News currentNews = newsList.get(getAdapterPosition());
+            Uri newsUri = Uri.parse(currentNews.getUrl());
+            Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
+            itemView.getContext().startActivity(websiteIntent);
         }
     }
 }

@@ -2,11 +2,9 @@ package com.example.oollan.newsapp;
 
 import android.app.LoaderManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.Loader;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,44 +15,38 @@ import android.widget.TextView;
 
 import com.example.oollan.newsapp.news.News;
 import com.example.oollan.newsapp.news.NewsAdapter;
-import com.example.oollan.newsapp.news.NewsItemClickListener;
 import com.example.oollan.newsapp.news.NewsLoader;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks
-        <List<News>>{
+        <List<News>> {
 
     private static final String URL = "http://content.guardianapis.com/search?section=games&" +
             "from-date=2018-01-01&order-by=newest&show-fields=thumbnail&" +
             "api-key=86dc7c4d-c3db-49ef-8284-97be1527587a";
     public static final int NEWS_LOADER_ID = 0;
     private NewsAdapter adapter = new NewsAdapter();
-    private TextView emptyStateTextView;
-    private ProgressBar loadingIndicator;
+    @BindView(R.id.recycler_view)
+    RecyclerView recyclerView;
+    @BindView(R.id.empty_view)
+    TextView emptyStateTextView;
+    @BindView(R.id.loading_indicator)
+    ProgressBar loadingIndicator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final RecyclerView recyclerView = findViewById(R.id.recycler_view);
-        emptyStateTextView = findViewById(R.id.empty_view);
-        loadingIndicator = findViewById(R.id.loading_indicator);
+        ButterKnife.bind(this);
         adapter.setNewsAdapter(new ArrayList<News>());
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         networkInitializer();
-        recyclerView.addOnItemTouchListener(new NewsItemClickListener(this, recyclerView,
-                new NewsItemClickListener.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(View view, int position) {
-                        News currentNews = adapter.getCurrentNews(position);
-                        Uri newsUri = Uri.parse(currentNews.getUrl());
-                        Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
-                        startActivity(websiteIntent);
-                    }
-                }));
     }
 
     private void networkInitializer() {
