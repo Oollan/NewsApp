@@ -17,12 +17,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
+import static com.example.oollan.newsapp.MainActivity.DASH_SEPARATOR;
+
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder> {
 
     private List<News> newsList;
-    private static final String SEPARATOR_1 = "T";
-    private static final String SEPARATOR_2 = "-";
-    private static final String DASH_SEPARATOR = " / ";
 
     public void setNewsAdapter(List<News> newsList) {
         this.newsList = newsList;
@@ -36,7 +35,12 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
 
     @Override
     public void onBindViewHolder(NewsViewHolder holder, int position) {
-        holder.thumbnail.setImageBitmap(newsList.get(position).getThumbnail());
+        if (newsList.get(position).getThumbnail() != null) {
+            holder.thumbnail.setImageBitmap(newsList.get(position).getThumbnail());
+            holder.thumbnail.setVisibility(View.VISIBLE);
+        } else {
+            holder.thumbnail.setVisibility(View.GONE);
+        }
         holder.title.setText(newsList.get(position).getTitle());
         holder.date.setText(dateFormatter(newsList.get(position).getDate()));
     }
@@ -52,8 +56,8 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
     }
 
     private String dateFormatter(String src) {
-        String[] parts = src.split(SEPARATOR_1);
-        String[] splits = parts[0].split(SEPARATOR_2);
+        String[] parts = src.split("T");
+        String[] splits = parts[0].split("-");
         return splits[2] + DASH_SEPARATOR + splits[1] + DASH_SEPARATOR + splits[0];
     }
 

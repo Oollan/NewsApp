@@ -2,13 +2,18 @@ package com.example.oollan.newsapp;
 
 import android.app.LoaderManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.Loader;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -18,21 +23,32 @@ import com.example.oollan.newsapp.news.NewsAdapter;
 import com.example.oollan.newsapp.news.NewsLoader;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
+import static com.example.oollan.newsapp.SettingsActivity.NewsPreferenceFragment.*;
+
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks
         <List<News>> {
 
-    private static final String URL = "http://content.guardianapis.com/search?section=games&" +
-            "from-date=2018-01-01&order-by=newest&show-fields=thumbnail&" +
-            "api-key=86dc7c4d-c3db-49ef-8284-97be1527587a";
     public static final int NEWS_LOADER_ID = 0;
+    public static final String DASH_SEPARATOR = " / ";
+    public static final Calendar c = Calendar.getInstance();
+    public static int year = c.get(Calendar.YEAR);
+    public static int month = c.get(Calendar.MONTH) + 1;
+    public static int day = c.get(Calendar.DAY_OF_MONTH);
+    public static String date = day + DASH_SEPARATOR +
+            month + DASH_SEPARATOR + year;
+    public static String thumbnail = "thumbnail";
+    private static final String URL = "http://content.guardianapis.com/search?section=games&" +
+            "to-date=" + year + "-" + month + "-" + day + "&order-by=newest&" +
+            "show-fields=" + thumbnail + "&api-key=86dc7c4d-c3db-49ef-8284-97be1527587a";
     private NewsAdapter adapter = new NewsAdapter();
     @BindView(R.id.recycler_view)
-    RecyclerView recyclerView;
+    public RecyclerView recyclerView;
     @BindView(R.id.empty_view)
     TextView emptyStateTextView;
     @BindView(R.id.loading_indicator)
@@ -47,6 +63,23 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         networkInitializer();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void networkInitializer() {
@@ -80,15 +113,32 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public Loader<List<News>> onCreateLoader(int i, Bundle bundle) {
-        return new NewsLoader(this, URL);
+        NewsLoader newsLoader = null;
+        if (PreferenceManager.getDefaultSharedPreferences(this).contains(DATE_KEY)) {
+            preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            thumbnail = preferences.getString(IMAGE_SWITCH_KEY, thumbnail);
+            String orderBy = preferences
+                    .getString(DATE_KEY, date);
+            if (orderBy != null) {
+                Uri baseUri = Uri.parse(URL);
+                String[] splits = orderBy.split(DASH_SEPARATOR);
+                Uri.Builder uriBuilder = baseUri.buildUpon();
+                uriBuilder.appendQueryParameter
+                        ("to-date", splits[2] + "-" + splits[1] + "-" + splits[0]);
+                newsLoader = new NewsLoader(this, uriBuilder.toString());
+            }
+        } else {
+            newsLoader = new NewsLoader(this, URL);
+        }
+        return newsLoader;
     }
 
     @Override
-    public void onLoadFinished(Loader<List<News>> loader, List<News> earthquakes) {
+    public void onLoadFinished(Loader<List<News>> loader, List<News> newsList) {
         adapter.clearData();
         loadingIndicator.setVisibility(View.GONE);
-        if (earthquakes != null && !earthquakes.isEmpty()) {
-            adapter.setNewsAdapter(earthquakes);
+        if (newsList != null && !newsList.isEmpty()) {
+            adapter.setNewsAdapter(newsList);
             emptyStateTextView.setVisibility(View.GONE);
         } else {
             emptyStateTextView.setVisibility(View.VISIBLE);

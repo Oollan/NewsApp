@@ -3,12 +3,12 @@ package com.example.oollan.newsapp.news;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 
-import com.example.oollan.newsapp.QueryUtils;
-
 import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.List;
+
+import static com.example.oollan.newsapp.QueryUtils.fetchDataFromServer;
 
 public class NewsLoader extends AsyncTaskLoader<List<News>> {
 
@@ -26,15 +26,10 @@ public class NewsLoader extends AsyncTaskLoader<List<News>> {
 
     @Override
     public List<News> loadInBackground() {
-        if (url == null) {
-            return null;
-        }
         List<News> newsList = null;
         try {
-            newsList = QueryUtils.fetchDataFromServer(url);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
+            newsList = fetchDataFromServer(url);
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
         return newsList;

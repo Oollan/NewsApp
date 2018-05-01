@@ -19,6 +19,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.oollan.newsapp.MainActivity.thumbnail;
+
 public final class QueryUtils {
 
     public static List<News> fetchDataFromServer(String requestUrl)
@@ -55,11 +57,15 @@ public final class QueryUtils {
     }
 
     private static Bitmap getBitmapFromURL(String src) throws IOException {
-        URL url = new URL(src);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.connect();
-        InputStream inputStream = connection.getInputStream();
-        return BitmapFactory.decodeStream(inputStream);
+        if (src.equals("")) {
+            return null;
+        } else {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.connect();
+            InputStream inputStream = connection.getInputStream();
+            return BitmapFactory.decodeStream(inputStream);
+        }
     }
 
     private static List<News> extractFeatureFromJson(String newsJSON)
@@ -71,12 +77,17 @@ public final class QueryUtils {
         for (int i = 0; i < newsArray.length(); i++) {
             JSONObject results = newsArray.getJSONObject(i);
             JSONObject fields = results.getJSONObject("fields");
-            String thumbnailUrl = fields.optString("thumbnail");
             String title = results.optString("webTitle");
             String date = results.optString("webPublicationDate");
             String url = results.optString("webUrl");
+            String thumbnailUrl = fields.optString(thumbnail);
             Bitmap thumbnail = getBitmapFromURL(thumbnailUrl);
-            News news = new News(thumbnail, title, date, url);
+            News news;
+            if (thumbnail != null) {
+                news = new News(thumbnail, title, date, url);
+            } else {
+                news = new News(null, title, date, url);
+            }
             newsList.add(news);
         }
         return newsList;

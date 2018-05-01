@@ -2,4 +2,12 @@
     <string name="app_name">Gaming News</string>
     <string name="no_internet_connection">No internet connection.</string>
     <string name="no_news">No news found.</string>
+    <string name="settings_menu_item">Settings</string>
+    <string name="settings_title">News Settings</string>
+    <string name="settings_images_switch_label">Show images</string>
+    <string name="settings_images_switch_key">images_switch</string>
+    <string name="settings_date_switch_label">Show news from current date</string>
+    <string name="settings_date_switch_key">date_switch</string>
+    <string name="settings_date_label">Sort by</string>
+    <string name="settings_date_key">date</string>
 </resources>
