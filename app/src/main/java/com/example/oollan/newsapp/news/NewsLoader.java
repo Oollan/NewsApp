@@ -8,7 +8,7 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.util.List;
 
-import static com.example.oollan.newsapp.QueryUtils.fetchDataFromServer;
+import static com.example.oollan.newsapp.utils.QueryUtils.fetchDataFromServer;
 
 public class NewsLoader extends AsyncTaskLoader<List<News>> {
 
@@ -28,7 +28,7 @@ public class NewsLoader extends AsyncTaskLoader<List<News>> {
     public List<News> loadInBackground() {
         List<News> newsList = null;
         try {
-            newsList = fetchDataFromServer(url);
+            newsList = fetchDataFromServer(url, getContext());
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }

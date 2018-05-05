@@ -1,7 +1,9 @@
-package com.example.oollan.newsapp;
+package com.example.oollan.newsapp.utils;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.preference.PreferenceManager;
 
 import com.example.oollan.newsapp.news.News;
 
@@ -19,14 +21,14 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.oollan.newsapp.MainActivity.thumbnail;
+import static com.example.oollan.newsapp.utils.Constants.IMAGE_SWITCH_KEY;
 
 public final class QueryUtils {
 
-    public static List<News> fetchDataFromServer(String requestUrl)
+    public static List<News> fetchDataFromServer(String requestUrl, Context context)
             throws IOException, JSONException {
         String jsonResponse = makeHttpRequest(requestUrl);
-        return extractFeatureFromJson(jsonResponse);
+        return extractFeatureFromJson(jsonResponse, context);
     }
 
     private static String makeHttpRequest(String src) throws IOException {
@@ -57,18 +59,14 @@ public final class QueryUtils {
     }
 
     private static Bitmap getBitmapFromURL(String src) throws IOException {
-        if (src.equals("")) {
-            return null;
-        } else {
-            URL url = new URL(src);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.connect();
-            InputStream inputStream = connection.getInputStream();
-            return BitmapFactory.decodeStream(inputStream);
-        }
+        URL url = new URL(src);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.connect();
+        InputStream inputStream = connection.getInputStream();
+        return BitmapFactory.decodeStream(inputStream);
     }
 
-    private static List<News> extractFeatureFromJson(String newsJSON)
+    private static List<News> extractFeatureFromJson(String newsJSON, Context context)
             throws JSONException, IOException {
         List<News> newsList = new ArrayList<>();
         JSONObject baseJsonResponse = new JSONObject(newsJSON);
@@ -76,14 +74,14 @@ public final class QueryUtils {
         JSONArray newsArray = response.getJSONArray("results");
         for (int i = 0; i < newsArray.length(); i++) {
             JSONObject results = newsArray.getJSONObject(i);
-            JSONObject fields = results.getJSONObject("fields");
             String title = results.optString("webTitle");
             String date = results.optString("webPublicationDate");
             String url = results.optString("webUrl");
-            String thumbnailUrl = fields.optString(thumbnail);
-            Bitmap thumbnail = getBitmapFromURL(thumbnailUrl);
             News news;
-            if (thumbnail != null) {
+            if (PreferenceManager.getDefaultSharedPreferences(context)
+                    .getBoolean(IMAGE_SWITCH_KEY, true)) {
+                String thumbnailUrl = results.getJSONObject("fields").optString("thumbnail");
+                Bitmap thumbnail = getBitmapFromURL(thumbnailUrl);
                 news = new News(thumbnail, title, date, url);
             } else {
                 news = new News(null, title, date, url);

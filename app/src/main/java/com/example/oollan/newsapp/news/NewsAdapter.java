@@ -17,7 +17,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-import static com.example.oollan.newsapp.MainActivity.DASH_SEPARATOR;
+import static com.example.oollan.newsapp.utils.Constants.DASH_SEPARATOR;
 
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder> {
 

@@ -1,9 +1,10 @@
-package com.example.oollan.newsapp;
+package com.example.oollan.newsapp.activities;
 
 import android.app.LoaderManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -18,34 +19,22 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.example.oollan.newsapp.R;
 import com.example.oollan.newsapp.news.News;
 import com.example.oollan.newsapp.news.NewsAdapter;
 import com.example.oollan.newsapp.news.NewsLoader;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-import static com.example.oollan.newsapp.SettingsActivity.NewsPreferenceFragment.*;
+import static com.example.oollan.newsapp.utils.Constants.*;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks
         <List<News>> {
 
-    public static final int NEWS_LOADER_ID = 0;
-    public static final String DASH_SEPARATOR = " / ";
-    public static final Calendar c = Calendar.getInstance();
-    public static int year = c.get(Calendar.YEAR);
-    public static int month = c.get(Calendar.MONTH) + 1;
-    public static int day = c.get(Calendar.DAY_OF_MONTH);
-    public static String date = day + DASH_SEPARATOR +
-            month + DASH_SEPARATOR + year;
-    public static String thumbnail = "thumbnail";
-    private static final String URL = "http://content.guardianapis.com/search?section=games&" +
-            "to-date=" + year + "-" + month + "-" + day + "&order-by=newest&" +
-            "show-fields=" + thumbnail + "&api-key=86dc7c4d-c3db-49ef-8284-97be1527587a";
     private NewsAdapter adapter = new NewsAdapter();
     @BindView(R.id.recycler_view)
     public RecyclerView recyclerView;
@@ -62,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         adapter.setNewsAdapter(new ArrayList<News>());
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        networkInitializer();
+        networkBinder(networkInitializer());
     }
 
     @Override
@@ -82,11 +71,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         return super.onOptionsItemSelected(item);
     }
 
-    private void networkInitializer() {
+    private NetworkInfo networkInitializer() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService
                 (Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo =
-                connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
+        return connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
+    }
+
+    private void networkBinder(NetworkInfo networkInfo) {
         if (networkInfo != null && networkInfo.isConnected()) {
             LoaderManager loaderManager = getLoaderManager();
             loaderManager.initLoader(NEWS_LOADER_ID, null, this);
@@ -96,12 +87,19 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
     }
 
+    public String getUrl() {
+        String[] splits = getCurrentDate().split(DASH_SEPARATOR);
+        return "http://content.guardianapis.com/search?section=games&" +
+                "to-date=" + splits[2] + "-" + splits[1] + "-" + splits[0] + "&order-by=newest&" +
+                "show-fields=thumbnail&api-key=86dc7c4d-c3db-49ef-8284-97be1527587a";
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         loadingIndicator.setVisibility(View.VISIBLE);
         emptyStateTextView.setVisibility(View.VISIBLE);
-        networkInitializer();
+        networkBinder(networkInitializer());
     }
 
     @Override
@@ -113,22 +111,20 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public Loader<List<News>> onCreateLoader(int i, Bundle bundle) {
-        NewsLoader newsLoader = null;
+        NewsLoader newsLoader;
         if (PreferenceManager.getDefaultSharedPreferences(this).contains(DATE_KEY)) {
-            preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            thumbnail = preferences.getString(IMAGE_SWITCH_KEY, thumbnail);
+            SharedPreferences preferences =
+                    PreferenceManager.getDefaultSharedPreferences(this);
             String orderBy = preferences
-                    .getString(DATE_KEY, date);
-            if (orderBy != null) {
-                Uri baseUri = Uri.parse(URL);
-                String[] splits = orderBy.split(DASH_SEPARATOR);
-                Uri.Builder uriBuilder = baseUri.buildUpon();
-                uriBuilder.appendQueryParameter
-                        ("to-date", splits[2] + "-" + splits[1] + "-" + splits[0]);
-                newsLoader = new NewsLoader(this, uriBuilder.toString());
-            }
+                    .getString(DATE_KEY, getCurrentDate());
+            Uri baseUri = Uri.parse(getUrl());
+            String[] splits = orderBy.split(DASH_SEPARATOR);
+            Uri.Builder uriBuilder = baseUri.buildUpon();
+            uriBuilder.appendQueryParameter
+                    ("to-date", splits[2] + "-" + splits[1] + "-" + splits[0]);
+            newsLoader = new NewsLoader(this, uriBuilder.toString());
         } else {
-            newsLoader = new NewsLoader(this, URL);
+            newsLoader = new NewsLoader(this, getUrl());
         }
         return newsLoader;
     }
